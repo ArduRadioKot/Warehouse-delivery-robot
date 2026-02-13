@@ -1,0 +1,8 @@
+[
+  {"id": 1, "name": "Робот 1", "status": "В сети", "model": "Rover-1"},
+  {"id": 2, "name": "Робот 2", "status": "Занят", "model": "Pioneer-1"},
+  {"id": 3, "name": "Робот 3", "status": "В сети", "model": "Rover-2"},
+  {"id": 4, "name": "Робот 4", "status": "Офлайн", "model": "Pioneer-1"},
+  {"id": 5, "name": "Робот 5", "status": "В сети", "model": "Pioneer-2"},
+  {"id": 6, "name": "Робот 6", "status": "В сети", "model": "Pioneer-1"}
+]

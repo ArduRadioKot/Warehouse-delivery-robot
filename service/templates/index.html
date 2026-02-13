@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Топология — Роботы</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="{{ url_for('index') }}" class="header-link">
+                <img src="{{ url_for('logo') }}" alt="Логотип" class="header-logo">
+                <span class="header-title">SIT склады</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main">
+        <section class="section">
+            <h2 class="section-title">Роботы</h2>
+            <div class="toolbar-block">
+                <div class="toolbar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Поиск роботов..." aria-label="Поиск">
+                    <button type="button" class="btn btn-primary" id="createTaskBtn">Создание задачи</button>
+                </div>
+            </div>
+            <div class="grid" id="robotsGrid">
+                {% for robot in robots %}
+                <article class="card" data-name="{{ robot.name | lower }}" data-status="{{ robot.status | lower }}">
+                    <div class="card-image">
+                        <svg class="robot-schema" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="10" y="20" width="100" height="40" rx="4" fill="var(--primary)" opacity="0.15"/>
+                            <rect x="20" y="30" width="20" height="20" rx="2" fill="var(--secondary)" opacity="0.4"/>
+                            <rect x="50" y="30" width="20" height="20" rx="2" fill="var(--secondary)" opacity="0.4"/>
+                            <rect x="80" y="30" width="20" height="20" rx="2" fill="var(--secondary)" opacity="0.4"/>
+                            <circle cx="35" cy="50" r="6" fill="var(--accent)" opacity="0.8"/>
+                            <circle cx="65" cy="50" r="6" fill="var(--accent)" opacity="0.8"/>
+                            <circle cx="95" cy="50" r="6" fill="var(--accent)" opacity="0.8"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title">{{ robot.name }}</h3>
+                    <p class="card-meta">Модель: {{ robot.model }} · {{ robot.status }}</p>
+                    <button type="button" class="btn btn-card" data-robot-id="{{ robot.id }}">Открыть</button>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Топология — Создание задачи</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-newtask">
+    <header class="header">
+        <div class="header-left">
+            <a href="{{ url_for('index') }}" class="header-link">
+                <img src="{{ url_for('logo') }}" alt="Логотип" class="header-logo">
+                <span class="header-title">SIT склады</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="newtask-layout">
+        <aside class="newtask-sidebar">
+            <form class="newtask-form" id="newtaskForm">
+                <h2 class="newtask-form-title">Создание задачи</h2>
+
+                <!-- 1. Загрузка карты -->
+                <section class="form-block">
+                    <label class="form-block-label">Загрузка карты</label>
+                    <div class="form-row form-row-file">
+                        <input type="text" class="input input-text" id="fileDisplay" placeholder="Выберите файл" readonly aria-label="Выбранный файл">
+                        <button type="button" class="btn btn-outline" id="browseBtn">Обзор</button>
+                        <input type="file" class="input-file-hidden" id="fileInput" accept="image/*,.pdf" aria-label="Выбрать файл карты">
+                    </div>
+                    <button type="button" class="btn btn-primary btn-full" id="uploadFileBtn">Загрузить файл</button>
+                </section>
+
+                <!-- 2. Разметка топологии -->
+                <section class="form-block">
+                    <label class="form-block-label">Разметка топологии</label>
+                    <p class="form-hint">После загрузки карты нажмите «Распознать» — стены и стелажи определятся по изображению.</p>
+                    <button type="button" class="btn btn-primary btn-full" id="analyzeTopologyBtn" disabled>Распознать топологию</button>
+                </section>
+
+                <!-- 3. Установка масштаба и размер здания -->
+                <section class="form-block">
+                    <label class="form-block-label">Размер здания (м)</label>
+                    <div class="form-row form-row-scale">
+                        <input type="number" class="input input-number" id="buildingLength" value="10" min="1" step="0.5" aria-label="Длина">
+                        <span class="form-sep">×</span>
+                        <input type="number" class="input input-number" id="buildingWidth" value="10" min="1" step="0.5" aria-label="Ширина">
+                    </div>
+                    <p class="form-hint">Длина и ширина здания в метрах для сетки.</p>
+                </section>
+                <section class="form-block">
+                    <label class="form-block-label">Масштаб (м на клетку)</label>
+                    <div class="form-row form-row-scale">
+                        <input type="number" class="input input-number" id="scaleX" value="1" min="0.1" step="0.1" aria-label="Метры по горизонтали">
+                        <span class="form-sep">×</span>
+                        <input type="number" class="input input-number" id="scaleY" value="1" min="0.1" step="0.1" aria-label="Метры по вертикали">
+                    </div>
+                    <p class="form-hint">Клетка сетки 1 м × 1 м (при значениях 1 × 1).</p>
+                </section>
+
+                <!-- Тип хранения: ячейки / стелажи -->
+                <section class="form-block">
+                    <label class="form-block-label">Тип хранения</label>
+                    <div class="form-checkgroup">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="storageCells" name="storageType" value="cells" checked>
+                            <span class="form-checkbox-label">Ячейки</span>
+                        </label>
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="storageShelves" name="storageType" value="shelves">
+                            <span class="form-checkbox-label">Стелажи</span>
+                        </label>
+                    </div>
+                    <p class="form-hint">Выберите один тип. Для стелажей укажите количество уровней и высоту каждого.</p>
+                </section>
+
+                <section class="form-block form-block-shelves hidden" id="shelvesBlock">
+                    <label class="form-block-label">Параметры стелажей</label>
+                    <div class="form-row form-row-scale" style="margin-bottom: 0.5rem;">
+                        <label class="form-inline-label" for="shelfLevelsCount">Уровней:</label>
+                        <input type="number" class="input input-number" id="shelfLevelsCount" value="2" min="1" max="20" aria-label="Количество уровней">
+                    </div>
+                    <div class="shelf-levels-list" id="shelfLevelsList"></div>
+                    <p class="form-hint">Высота каждого уровня от пола, в метрах.</p>
+                </section>
+
+                <!-- Граф по центрам клеток -->
+                <section class="form-block">
+                    <label class="form-block-label">Граф</label>
+                    <p class="form-hint">Узлы — центры клеток, рёбра — связи между соседними проходимыми клетками. Длины в метрах.</p>
+                    <div class="form-row" style="gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" id="buildGraphBtn" disabled>Построить граф</button>
+                        <button type="button" class="btn btn-outline" id="loadGraphBtn" disabled>Загрузить граф</button>
+                    </div>
+                </section>
+            </form>
+        </aside>
+
+        <div class="newtask-content">
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" class="input-file-hidden" id="imageInput" accept="image/*" aria-label="Загрузить изображение">
+                <div class="upload-zone-inner">
+                    <svg class="upload-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="upload-zone-text">Загрузите изображение</p>
+                    <p class="upload-zone-hint">или перетащите файл сюда</p>
+                </div>
+            </div>
+            <div class="upload-preview hidden" id="uploadPreview">
+                <div class="map-wrapper" id="mapWrapper">
+                    <img src="" alt="Превью карты" id="previewImage">
+                    <canvas class="map-overlay" id="mapOverlay" aria-hidden="true"></canvas>
+                    <canvas class="map-graph-overlay" id="mapGraphOverlay" aria-hidden="true"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <aside class="newtask-sidebar newtask-sidebar-right" id="routeSidebar">
+            <div class="newtask-form">
+                <h2 class="newtask-form-title">Маршрут облёта</h2>
+                <section class="form-block">
+                    <label class="form-block-label">Режим карты</label>
+                    <div class="form-checkgroup">
+                        <label class="form-checkbox">
+                            <input type="radio" name="mapClickMode" id="mapModeDrone" value="drone" checked>
+                            <span class="form-checkbox-label">Поставить дрон</span>
+                        </label>
+                        <label class="form-checkbox">
+                            <input type="radio" name="mapClickMode" id="mapModeViewQr" value="view_qr">
+                            <span class="form-checkbox-label">Просмотр QR по узлам</span>
+                        </label>
+                    </div>
+                    <p class="form-hint">«Поставить дрон» — клик ставит дрона. «Просмотр QR» — клик по узлу открывает QR.</p>
+                </section>
+                <section class="form-block">
+                    <label class="form-block-label">Оптимальный облёт графа</label>
+                    <p class="form-hint">Сначала постройте граф слева. Маршрут посещает все узлы (алгоритм Дейкстры для путей между узлами).</p>
+                    <button type="button" class="btn btn-primary btn-full" id="buildRouteBtn" disabled>Построить маршрут</button>
+                </section>
+                <section class="form-block" id="routeStatsBlock">
+                    <label class="form-block-label">Маршрут</label>
+                    <p class="form-route-stats" id="routeStats">—</p>
+                </section>
+                <section class="form-block">
+                    <label class="form-block-label">Симуляция</label>
+                    <div class="form-row" style="gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" id="startSimulationBtn" disabled>Запустить симуляцию</button>
+                        <button type="button" class="btn btn-outline" id="stopSimulationBtn" disabled>Остановить</button>
+                    </div>
+                </section>
+                <section class="form-block">
+                    <label class="form-block-label">Дрон</label>
+                    <div class="form-row" style="align-items: center; margin-bottom: 0.5rem;">
+                        <label class="form-inline-label" for="flightHeight">Высота полёта (м):</label>
+                        <input type="number" class="input input-number" id="flightHeight" value="1.5" min="0.5" max="10" step="0.1" aria-label="Высота полёта">
+                    </div>
+                    <p class="form-hint">Запуск реального дрона по маршруту. В каждом узле распознаётся QR-код.</p>
+                    <div class="form-row" style="gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" id="startDroneBtn" disabled>Запустить дрон</button>
+                        <button type="button" class="btn btn-outline" id="landDroneBtn">Посадка</button>
+                        <button type="button" class="btn btn-outline" id="videoStreamBtn">Видеопоток</button>
+                    </div>
+                </section>
+            </div>
+        </aside>
+    </div>
+
+    <div class="modal-overlay hidden" id="nodeQrModal" aria-hidden="true">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="nodeQrModalTitle">Узел</h3>
+                <button type="button" class="modal-close" id="nodeQrModalClose" aria-label="Закрыть">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-qr-content" id="nodeQrModalContent">—</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="videoStreamModal" aria-hidden="true">
+        <div class="modal modal-video">
+            <div class="modal-header">
+                <h3 class="modal-title">Видеопоток с камеры дрона</h3>
+                <button type="button" class="modal-close" id="videoStreamModalClose" aria-label="Закрыть">&times;</button>
+            </div>
+            <div class="modal-body modal-video-body">
+                <label class="form-checkbox" style="margin-bottom: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="videoStreamQrToggle"> Распознавание QR (медленнее)
+                </label>
+                <canvas class="modal-video-frame" id="videoStreamFrame" width="640" height="480"></canvas>
+                <div class="modal-video-debug" id="videoStreamDebug" aria-live="polite"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/newtask.js') }}"></script>
+</body>
+</html>
