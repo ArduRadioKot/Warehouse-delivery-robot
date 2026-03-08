@@ -73,13 +73,13 @@
     "ny": 2,
     "scaleX": 0.5,
     "scaleY": 0.5,
-    "imageWidth": 2420,
-    "imageHeight": 1439,
+    "imageWidth": 1200,
+    "imageHeight": 806,
     "walls": [
-      200,
-      132,
-      1703,
-      1161
+      35,
+      98,
+      1165,
+      662
     ]
   }
 }

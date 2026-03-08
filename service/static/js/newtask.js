@@ -41,6 +41,8 @@
     var flyoverReturnStartIndex = null;
     var simulationInterval = null;
     var nodeQrData = {};
+    var canSendRobot = false;
+    var robotStartNode = null;
     var videoStreamInterval = null;
 
     function showPreview(file) {
@@ -58,6 +60,8 @@
             gridGeometry = null;
             graphData = null;
             flyoverRoute = null;
+            canSendRobot = false;
+            robotStartNode = null;
             flyoverRouteLength = 0;
             flyoverReturnStartIndex = null;
             droneCell = null;
@@ -560,6 +564,16 @@
                 openNodeQrModal(nodeId, ci, cj);
                 return;
             }
+            if (viewQrMode && viewQrMode.value === 'send_robot' && isGraphNode) {
+                if (mapClickTimeout) clearTimeout(mapClickTimeout);
+                mapClickTimeout = null;
+                if (!canSendRobot) {
+                    alert('Сначала завершите полёт дрона или симуляцию.');
+                    return;
+                }
+                onRobotNodeClick(nodeId);
+                return;
+            }
             if (mapClickTimeout) clearTimeout(mapClickTimeout);
             mapClickTimeout = setTimeout(function () {
                 mapClickTimeout = null;
@@ -603,6 +617,40 @@
     function closeNodeQrModal() {
         var modal = document.getElementById('nodeQrModal');
         if (modal) modal.classList.add('hidden');
+    }
+
+    function onRobotNodeClick(nodeId) {
+        if (!robotStartNode) {
+            robotStartNode = nodeId;
+            var nd = graphData && graphData.nodes ? graphData.nodes.find(function (n) { return n.id === nodeId; }) : null;
+            var pos = nd ? ' (' + nd.i + ', ' + nd.j + ')' : '';
+            alert('Начало координат робота установлено в точке ' + nodeId + pos + '. Кликните по другой точке — робот доедет, подождёт 3 сек и вернётся.');
+            return;
+        }
+        if (robotStartNode === nodeId) {
+            alert('Это уже начало координат. Кликните по другой точке.');
+            return;
+        }
+        var ipEl = document.getElementById('robotIp');
+        var baseUrl = (ipEl && ipEl.value && ipEl.value.trim()) ? ipEl.value.trim() : '192.168.4.1';
+        var payload = {
+            target_node_id: nodeId,
+            start_node_id: robotStartNode,
+            base_url: baseUrl,
+            return_to_start: true,
+            wait_at_target_sec: 3
+        };
+        fetch('/api/robot/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.ok) alert(data.message || 'Готово');
+                else alert(data.error || 'Ошибка');
+            })
+            .catch(function (err) { alert('Ошибка связи: ' + (err.message || err)); });
     }
 
     var videoStreamActive = false;
@@ -784,11 +832,13 @@
                     topologyData = data;
                     droneCell = null;
                     axisYDirection = null;
-                    graphData = null;
-                    flyoverRoute = null;
-                    flyoverRouteLength = 0;
-                    flyoverReturnStartIndex = null;
-                    updateGraphButtons();
+                graphData = null;
+                flyoverRoute = null;
+                flyoverRouteLength = 0;
+                flyoverReturnStartIndex = null;
+                canSendRobot = false;
+            robotStartNode = null;
+                updateGraphButtons();
                     resizeOverlay();
                     drawOverlay();
                     fetch('/api/graph')
@@ -821,6 +871,8 @@
                 flyoverRoute = null;
                 flyoverRouteLength = 0;
                 flyoverReturnStartIndex = null;
+                canSendRobot = false;
+            robotStartNode = null;
                 updateRouteButtons();
                 drawOverlay();
             });
@@ -922,6 +974,8 @@
             flyoverRoute = null;
             flyoverRouteLength = 0;
             flyoverReturnStartIndex = null;
+            canSendRobot = false;
+            robotStartNode = null;
             updateRouteButtons();
             fetchNodeQrData();
             drawOverlay();
@@ -959,6 +1013,8 @@
                         flyoverRoute = null;
                         flyoverRouteLength = 0;
                         flyoverReturnStartIndex = null;
+                        canSendRobot = false;
+            robotStartNode = null;
                         updateRouteButtons();
                         fetchNodeQrData();
                         drawOverlay();
@@ -981,6 +1037,8 @@
                 return;
             }
             buildFlyoverRoute();
+            canSendRobot = false;
+            robotStartNode = null;
             updateRouteStats();
             updateRouteButtons();
         });
@@ -1011,6 +1069,7 @@
                     simulationInterval = null;
                     if (stopSimulationBtn) stopSimulationBtn.disabled = true;
                     if (startSimulationBtn) startSimulationBtn.disabled = false;
+                    canSendRobot = true;
                 }
             }, 400);
         });
@@ -1104,6 +1163,7 @@
             .then(function (data) {
                 if (wasMissionActive && !data.mission_active) {
                     wasMissionActive = false;
+                    canSendRobot = true;
                     resetDroneButton();
                     fetchNodeQrData();
                 } else if (data.mission_active) {

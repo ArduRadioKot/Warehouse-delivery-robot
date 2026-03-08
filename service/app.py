@@ -11,6 +11,7 @@ from dronecontroller import (
     get_current_waypoint_index, get_current_node_index,
     get_qr_results, set_qr_save_path, get_camera_frame_jpeg, get_camera_frame_with_qr,
 )
+from robotcontroller import send_robot_to_node, get_robot_position, reset_robot_position, return_robot_to_start
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
@@ -147,6 +148,39 @@ def api_drone_status():
     })
 
 
+@app.route('/api/robot/send', methods=['POST'])
+def api_robot_send():
+    _ensure_data_dir()
+    if not GRAPH_PATH.exists():
+        return jsonify({'error': 'Граф не построен'}), 400
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({'error': 'Ожидается JSON'}), 400
+        target_node_id = data.get('target_node_id')
+        if not target_node_id:
+            return jsonify({'error': 'Укажите target_node_id'}), 400
+        start_node_id = data.get('start_node_id')
+        base_url = data.get('base_url', '192.168.4.1')
+        return_to_start = data.get('return_to_start', False)
+        wait_at_target_sec = int(data.get('wait_at_target_sec', 0))
+        wait_at_target_sec = max(0, min(60, wait_at_target_sec))
+        with open(GRAPH_PATH, 'r', encoding='utf-8') as f:
+            graph = json.load(f)
+        ok, msg = send_robot_to_node(
+            graph, target_node_id,
+            start_node_id=start_node_id,
+            base_url=base_url,
+            return_to_start=return_to_start,
+            wait_at_target_sec=wait_at_target_sec,
+        )
+        if ok:
+            return jsonify({'ok': True, 'message': msg})
+        return jsonify({'error': msg}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/nodes/qr')
 def api_nodes_qr():
     result = {}
@@ -181,6 +215,47 @@ def api_drone_frame_with_qr():
     if data is None:
         return jsonify({'error': 'no_frame', 'debug': {}}), 200
     return jsonify(data)
+
+
+@app.route('/api/robot/position', methods=['GET'])
+def api_robot_position():
+    """Получает текущую позицию робота."""
+    try:
+        base_url = request.args.get('base_url', '192.168.4.1')
+        position, err = get_robot_position(base_url)
+        if err:
+            return jsonify({'error': err}), 400
+        return jsonify({'position': position})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/robot/reset-position', methods=['POST'])
+def api_robot_reset_position():
+    """Сбрасывает позицию робота в исходную точку."""
+    try:
+        data = request.get_json() or {}
+        base_url = data.get('base_url', '192.168.4.1')
+        ok, msg = reset_robot_position(base_url)
+        if ok:
+            return jsonify({'ok': True, 'message': msg})
+        return jsonify({'error': msg}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/robot/return-to-start', methods=['POST'])
+def api_robot_return_to_start():
+    """Отправляет робота в исходную точку."""
+    try:
+        data = request.get_json() or {}
+        base_url = data.get('base_url', '192.168.4.1')
+        ok, msg = return_robot_to_start(base_url)
+        if ok:
+            return jsonify({'ok': True, 'message': msg})
+        return jsonify({'error': msg}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/graph', methods=['POST'])

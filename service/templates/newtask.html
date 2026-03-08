@@ -131,8 +131,20 @@
                             <input type="radio" name="mapClickMode" id="mapModeViewQr" value="view_qr">
                             <span class="form-checkbox-label">Просмотр QR по узлам</span>
                         </label>
+                        <label class="form-checkbox">
+                            <input type="radio" name="mapClickMode" id="mapModeSendRobot" value="send_robot">
+                            <span class="form-checkbox-label">Отправить робота в точку</span>
+                        </label>
                     </div>
-                    <p class="form-hint">«Поставить дрон» — клик ставит дрона. «Просмотр QR» — клик по узлу открывает QR.</p>
+                    <p class="form-hint">«Отправить робота» — 1-й клик: установка начала координат. 2-й клик: робот едет в точку, ждёт 3 с, возвращается.</p>
+                </section>
+                <section class="form-block" id="robotBlock">
+                    <label class="form-block-label">Робот (ESP8266)</label>
+                    <div class="form-row" style="align-items: center; margin-bottom: 0.5rem;">
+                        <label class="form-inline-label" for="robotIp">IP робота:</label>
+                        <input type="text" class="input input-text" id="robotIp" value="192.168.4.1" placeholder="192.168.4.1" aria-label="IP робота">
+                    </div>
+                    <p class="form-hint">Подключитесь к Wi‑Fi робота (RobotAP). 1-й клик — начало координат, 2-й — целевая точка.</p>
                 </section>
                 <section class="form-block">
                     <label class="form-block-label">Оптимальный облёт графа</label>
