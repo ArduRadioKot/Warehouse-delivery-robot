@@ -1,0 +1,3 @@
+-r requirements.txt
+pioneer_sdk>=0.0.1
+pyzbar>=0.1.9

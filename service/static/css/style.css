@@ -697,3 +697,62 @@ body {
         min-height: 280px;
     }
 }
+
+/* Unified WDR workspace and Hello-pioner program workflow */
+a.btn { text-decoration: none; }
+.header { flex-wrap: wrap; gap: 0.75rem; }
+.header-right { flex-wrap: wrap; }
+.header-right a { text-decoration: none; }
+.header-right [aria-current="page"] { background: #ffffff20; }
+.page-intro { width: 100%; margin: 0 0 1.5rem; }
+.page-intro h1 { font-size: clamp(1.7rem, 3vw, 2.3rem); color: var(--primary); margin: 0.45rem 0; letter-spacing: -0.035em; }
+.page-intro p { max-width: 780px; line-height: 1.6; color: #526674; }
+.page-intro .eyebrow { font-size: 0.7rem; letter-spacing: 0.14em; color: #168190; font-weight: 700; }
+.workspace-links { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; width: 100%; margin-bottom: 2rem; }
+.workspace-links a { border: 1px solid #d6e6e8; background: white; padding: 1.4rem; border-radius: 14px; color: #168190; text-decoration: none; }
+.workspace-links strong { display: block; color: var(--primary); font-size: 1.2rem; margin: 0.5rem 0; }
+.workspace-links span { font-size: 0.85rem; color: #526674; }
+.programmer-main { max-width: 1500px; margin: auto; padding: 1.7rem 2rem 3rem; }
+.programmer-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.panel { background: #fff; border: 1px solid #dbe8ea; border-radius: 16px; padding: 1.3rem; min-width: 0; }
+.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 1.1rem; }
+.panel h2 { font-size: 1.1rem; margin: 0; color: var(--primary); }
+.badge { font-size: 0.72rem; background: #edf6f6; padding: 0.4rem 0.6rem; border-radius: 6px; color: #39606b; white-space: nowrap; }
+.wrap { flex-wrap: wrap; gap: 0.6rem; }
+.field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; font-size: 0.82rem; color: #526674; }
+.field .input { width: 100%; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.action-buttons .btn { font-size: 0.8rem; padding: 0.55rem 0.75rem; }
+.action-list { list-style-position: inside; min-height: 130px; padding: 0; margin: 1rem 0; }
+.action-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; border-left: 3px solid var(--secondary); border-radius: 5px; background: #f3f8f9; padding: 0.5rem 0.65rem; margin: 0.5rem 0; font-size: 0.85rem; }
+.row-controls { display: flex; }
+.text-button { border: 0; background: transparent; color: #18778a; cursor: pointer; padding: 0.4rem; font: inherit; font-size: 0.8rem; }
+.text-button:hover { background: #e7f4f4; border-radius: 5px; }
+.text-link { color: #18778a; font-size: 0.8rem; }
+.empty-state { list-style: none; padding: 2rem 1rem; text-align: center; color: #73838d; font-size: 0.9rem; }
+.status-message { padding: 0.75rem 1rem; border-radius: 8px; background: #e3f3ed; color: #295d4a; font-size: 0.85rem; }
+.status-message.is-error { background: #fee9e6; color: #a32623; }
+#programGraph { width: 100%; display: block; background: #f8fbfc; border: 1px solid #e7eff1; border-radius: 10px; margin: 1rem 0; }
+.graph-edge { stroke: #c3dce1; stroke-width: 4; }
+.route-edge { stroke: #ecb54f; stroke-width: 6; }
+.graph-node { cursor: pointer; }
+.graph-node circle { fill: #3ba2b4; stroke: white; stroke-width: 3; }
+.graph-node:hover circle, .graph-node:focus circle { stroke: #193d52; }
+.graph-node .node-start { fill: #46ac70; }
+.graph-node .node-target { fill: #d36a54; }
+.graph-node text { fill: #526674; font-size: 13px; }
+.map-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.72rem; color: #526674; }
+.map-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot.start { background: #46ac70; }.dot.target { background: #d36a54; }.dot.route { background: #ecb54f; }
+.plan-summary { background: #f0f6f8; border-radius: 7px; margin: 1rem 0; padding: 0.8rem; font-size: 0.83rem; line-height: 1.5; }
+details { font-size: 0.82rem; color: #526674; } summary { cursor: pointer; }
+.command-list { max-height: 180px; overflow: auto; line-height: 1.8; }
+.saved-program { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 0; border-bottom: 1px solid #e8eff0; }
+.saved-program > div { flex: 1; overflow-wrap: anywhere; }.saved-program strong { font-size: 0.9rem; }
+.saved-programs { font-size: 0.9rem; color: #526674; }
+.run-status { font-size: 0.85rem; line-height: 1.6; }
+.run-controls { margin-top: 1rem; }.btn-danger { background: #b43a35; color: white; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (max-width: 900px) { .programmer-layout { grid-template-columns: 1fr; } .programmer-main { padding: 1rem; } }
+@media (max-width: 550px) { .workspace-links { grid-template-columns: 1fr; } .header-title { font-size: 1rem; } .panel { padding: 1rem; } }

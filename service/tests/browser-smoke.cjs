@@ -1,0 +1,73 @@
+// Run against a disposable WDR_DATA_DIR: this check replaces its graph and programs.
+const {chromium} = require('playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const root = path.resolve(__dirname, '../..');
+const base = process.env.WDR_TEST_URL || 'http://127.0.0.1:5003';
+(async () => {
+    const browser = await chromium.launch({headless: true});
+    const context = await browser.newContext({viewport: {width:1440, height:1080}, deviceScaleFactor:1});
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('dialog', dialog => dialog.accept());
+    try {
+        const graph = JSON.parse(fs.readFileSync(path.join(root,'service/examples/graph.json')));
+        assert.equal((await context.request.post(base+'/api/graph',{data:graph})).status(),200);
+        let saved = (await (await context.request.get(base+'/api/robot/programs')).json()).programs;
+        for (const program of saved) await context.request.delete(base+'/api/robot/programs/'+program.id);
+        await page.goto(base);
+        await page.screenshot({path:path.join(root,'docs/screenshots/dashboard.png'),fullPage:true});
+        await page.locator('#searchInput').fill('Робот 1');
+        assert.equal(await page.locator('#robotsGrid .card:visible').count(),1);
+        await page.locator('.btn-card:visible').click();
+        await page.waitForURL('**/robot-programmer');
+        await page.getByRole('button',{name:'Узел 0_0',exact:true}).waitFor();
+        await page.locator('#selectStart').click();
+        await page.getByRole('button',{name:'Узел 0_0',exact:true}).click();
+        await page.locator('#selectTarget').click();
+        await page.getByRole('button',{name:'Узел 1_3',exact:true}).click();
+        await page.locator('#addMove').click();
+        await page.locator('#addLiftUp').click();
+        await page.getByRole('button',{name:'Узел 7_4',exact:true}).click();
+        await page.locator('#addMove').click();
+        await page.locator('#addLiftDown').click();
+        await page.locator('#programName').fill('Доставка к стеллажу');
+        await page.locator('#previewProgram').click();
+        await page.waitForFunction(()=>document.querySelector('#planSummary').textContent.includes('Маршрут проверен'));
+        assert.match(await page.locator('#planSummary').innerText(),/5.5 м/);
+        for (const name of ['Доставка к стеллажу','Перевозка · вторая программа']) {
+            await page.locator('#programName').fill(name);
+            await page.locator('#saveProgram').click();
+            await page.getByText(name,{exact:true}).waitFor();
+        }
+        await page.reload();
+        await page.locator('.saved-program').first().waitFor();
+        assert.equal(await page.locator('.saved-program').count(),2);
+        await page.locator('.saved-program').first().getByRole('button',{name:'Загрузить'}).click();
+        assert.equal(await page.locator('.action-row').count(),4);
+        await page.locator('#previewProgram').click();
+        await page.waitForFunction(()=>document.querySelector('#planSummary').textContent.includes('Маршрут проверен'));
+        await page.screenshot({path:path.join(root,'docs/screenshots/programmer.png'),fullPage:true});
+        await page.setViewportSize({width:390,height:844});
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth),true);
+        await page.screenshot({path:path.join(root,'docs/screenshots/programmer-mobile.png'),fullPage:true});
+        await page.setViewportSize({width:1440,height:1080});
+        await page.goto(base+'/new-task');
+        await page.locator('#fileInput').setInputFiles(path.join(root,'service/examples/warehouse.png'));
+        await page.locator('#uploadFileBtn').click();
+        await page.locator('#analyzeTopologyBtn').click();
+        await page.waitForFunction(()=>!document.querySelector('#buildGraphBtn').disabled);
+        await page.locator('#storageShelves').check();
+        await page.locator('#buildGraphBtn').click();
+        await page.waitForFunction(()=>document.querySelector('#buildGraphBtn').textContent.includes('сохранён'));
+        const mapped = await (await context.request.get(base+'/api/graph')).json();
+        assert(mapped.nodes.length > 0 && mapped.nodes.length < 100);
+        await page.locator('#buildRouteBtn').click();
+        await page.waitForFunction(()=>document.querySelector('#routeStats').textContent.includes('Узлов'));
+        await page.screenshot({path:path.join(root,'docs/screenshots/topology.png'),fullPage:true});
+        assert.deepEqual(errors,[]);
+        console.log('Browser checks passed: navigation, search, graph selection, preview, two saves, reload, mobile layout, topology and route.');
+    } finally { await browser.close(); }
+})().catch(error=>{console.error(error);process.exitCode=1;});

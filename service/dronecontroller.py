@@ -27,7 +27,7 @@ except ImportError:
 try:
     from pyzbar import pyzbar
     PYZBAR_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     PYZBAR_AVAILABLE = False
     pyzbar = None
 

@@ -56,18 +56,18 @@ def detect_walls_and_shelves(
     # Порог: линии (тёмные) становятся белыми для findContours
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-    contours, _ = cv2.findContours(
-        thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+    contours, hierarchy = cv2.findContours(
+        thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
 
     # Собираем прямоугольники по площади
     rects = []
-    for c in contours:
+    for index, c in enumerate(contours):
         area = cv2.contourArea(c)
         if area < 200:  # отсекаем мелкий шум
             continue
         x, y, rw, rh = cv2.boundingRect(c)
-        rects.append((area, (x, y, rw, rh)))
+        rects.append((area, (x, y, rw, rh), index))
 
     rects.sort(key=lambda r: r[0], reverse=True)
 
@@ -81,8 +81,15 @@ def detect_walls_and_shelves(
 
     walls = list(rects[0][1])
     shelves = []
+    # In a line drawing, the wall encloses a white floor contour. Its children
+    # are the outer shelf contours; their own holes must not become duplicates.
+    wall_index = rects[0][2]
+    floor_candidates = [r for r in rects[1:] if hierarchy[0][r[2]][3] == wall_index]
+    floor_index = floor_candidates[0][2] if floor_candidates else None
 
-    for area, (x, y, rw, rh) in rects[1:]:
+    for area, (x, y, rw, rh), index in rects[1:]:
+        if floor_index is None or hierarchy[0][index][3] != floor_index:
+            continue
         # Только контуры целиком внутри стен
         if not _is_inside((x, y, rw, rh), tuple(walls)):
             continue

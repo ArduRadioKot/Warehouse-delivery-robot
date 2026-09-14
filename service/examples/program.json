@@ -1,0 +1,23 @@
+{
+  "name": "Доставка к стеллажу",
+  "start_node": "0_0",
+  "start_heading": 90,
+  "actions": [
+    {
+      "type": "move",
+      "target_node": "1_3"
+    },
+    {
+      "type": "lift",
+      "lift_action": "up"
+    },
+    {
+      "type": "move",
+      "target_node": "7_4"
+    },
+    {
+      "type": "lift",
+      "lift_action": "down"
+    }
+  ]
+}

@@ -3,7 +3,9 @@ import os
 import tempfile
 from pathlib import Path
 
-from flask import Flask, render_template, send_from_directory, request, jsonify, Response
+from flask import Flask, render_template, send_from_directory, request, jsonify, Response, g
+
+from programs import register_programs, validate_graph, atomic_json
 
 from cv_topology import detect_walls_and_shelves
 from dronecontroller import (
@@ -15,13 +17,33 @@ from robotcontroller import send_robot_to_node, get_robot_position, reset_robot_
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-DATA_DIR = Path(__file__).resolve().parent / 'data'
+DATA_DIR = Path(os.environ.get('WDR_DATA_DIR', Path(__file__).resolve().parent / 'data'))
 GRAPH_PATH = DATA_DIR / 'graph.json'
 ROBOTS_PATH = DATA_DIR / 'robots.json'
 NODES_QR_PATH = DATA_DIR / 'nodes_qr.json'
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 set_qr_save_path(NODES_QR_PATH)
+register_programs(app, GRAPH_PATH, DATA_DIR)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+
+@app.before_request
+def protect_program_session():
+    # Serialize legacy commands with the new single-robot program runner.
+    if request.path in ('/api/robot/send', '/api/robot/reset-position', '/api/robot/return-to-start') and request.method == 'POST':
+        runner = app.extensions['program_runner']
+        runner.lock.acquire()
+        g.robot_lock = runner.lock
+        if runner.active():
+            return jsonify(error='Сначала завершите или остановите программу робота'), 409
+
+
+@app.teardown_request
+def release_robot_lock(error=None):
+    lock = g.pop('robot_lock', None)
+    if lock is not None:
+        lock.release()
 
 _DEFAULT_ROBOTS = [
     {"id": 1, "name": "Робот 1", "status": "В сети", "model": "Pioneer-1"},
@@ -52,12 +74,17 @@ def new_task():
     return render_template('newtask.html')
 
 
+@app.route('/robot-programmer')
+def robot_programmer():
+    return render_template('robot_programmer.html')
+
+
 @app.route('/api/analyze-topology', methods=['POST'])
 def api_analyze_topology():
     if 'image' not in request.files:
         return jsonify({'error': 'Нет файла image'}), 400
     f = request.files['image']
-    if not f.filename or not f.content_type.startswith('image/'):
+    if not f.filename or not (f.content_type or '').startswith('image/'):
         return jsonify({'error': 'Файл должен быть изображением'}), 400
     tmp_path = None
     try:
@@ -81,14 +108,12 @@ def api_analyze_topology():
 
 @app.route('/logo.png')
 def logo():
-    root = os.path.join(os.path.dirname(__file__), '..')
-    return send_from_directory(root, 'logo.png')
+    return send_from_directory(Path(app.static_folder) / 'images', 'logo.png')
 
 
 @app.route('/drone-icon.png')
 def drone_icon():
-    root = os.path.join(os.path.dirname(__file__), '..')
-    return send_from_directory(root, 'free-icon-drone-4056808.png')
+    return send_from_directory(Path(app.static_folder) / 'images', 'drone.png')
 
 
 def _ensure_data_dir():
@@ -265,16 +290,18 @@ def api_graph_post():
         data = request.get_json()
         if data is None:
             return jsonify({'error': 'Ожидается JSON'}), 400
+        validate_graph(data)
         nodes = data.get('nodes', [])
         edges = data.get('edges', [])
         meta = data.get('meta')
         payload = {'nodes': nodes, 'edges': edges, 'meta': meta}
-        with open(GRAPH_PATH, 'w', encoding='utf-8') as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
+        atomic_json(GRAPH_PATH, payload)
         return jsonify({'ok': True})
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5002)
+    app.run(host='127.0.0.1', debug=False, port=int(os.environ.get('WDR_PORT', '5002')))

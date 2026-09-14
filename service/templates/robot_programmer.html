@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Программы робота — WDR</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="header">
+    <a href="/" class="header-link"><img src="/logo.png" alt="" class="header-logo"><span class="header-title">WDR · Складская система</span></a>
+    <nav class="header-right" aria-label="Основная навигация"><a class="icon-btn" href="/">Роботы</a><a class="icon-btn" href="/new-task">Карта и дрон</a><a class="icon-btn" href="/robot-programmer" aria-current="page">Программы робота</a></nav>
+</header>
+<main class="programmer-main">
+    <div class="page-intro"><p class="eyebrow">НАЗЕМНЫЙ РОБОТ / ПРОГРАММЫ</p><h1>Маршрут и работа с грузом</h1><p>Выберите точки на графе, соберите действия и проверьте путь перед запуском.</p></div>
+    <p id="programStatus" class="status-message" role="status" aria-live="polite">Загрузка карты…</p>
+    <div class="programmer-layout">
+        <section class="panel map-panel" aria-labelledby="mapTitle">
+            <div class="panel-heading"><h2 id="mapTitle">Карта маршрута</h2><span id="graphSummary" class="badge"></span></div>
+            <div class="toolbar wrap"><button class="btn btn-outline" id="selectStart" type="button">Выбрать старт</button><button class="btn btn-primary" id="selectTarget" type="button">Выбрать цель</button><a href="/new-task" class="text-link">Редактор карты ↗</a></div>
+            <p class="form-hint" id="mapHint">Нажмите на узел, чтобы выбрать цель.</p>
+            <svg id="programGraph" viewBox="0 0 760 430" role="group" aria-label="Граф склада. Выберите узел мышью или клавиатурой."></svg>
+            <div class="map-legend"><span><i class="dot start"></i>Старт</span><span><i class="dot target"></i>Цель</span><span><i class="dot route"></i>Проверенный маршрут</span><span id="selectionSummary">Точки не выбраны</span></div>
+            <div class="plan-summary" id="planSummary">Предварительный расчёт покажет длину пути и команды робота.</div>
+            <details><summary>Команды WDR</summary><ol id="commandList" class="command-list"></ol></details>
+        </section>
+        <section class="panel" aria-labelledby="editorTitle">
+            <div class="panel-heading"><h2 id="editorTitle">Программа</h2><span id="actionCount" class="badge">0 действий</span></div>
+            <label class="field">Название<input id="programName" class="input" maxlength="100" value="Перевозка груза"></label>
+            <label class="field">Начальный курс<select id="startHeading" class="input"><option value="90">Вверх по сетке (+j, 90°)</option><option value="0">Вправо (+i, 0°)</option><option value="-90">Вниз (−j, −90°)</option><option value="180">Влево (−i, 180°)</option></select></label>
+            <div class="action-buttons"><button class="btn btn-outline" id="addMove">+ Перемещение</button><button class="btn btn-outline" id="addLiftUp">+ Поднять груз</button><button class="btn btn-outline" id="addLiftDown">+ Опустить груз</button></div>
+            <ol id="actionList" class="action-list"></ol>
+            <div class="toolbar wrap"><button class="btn btn-primary" id="previewProgram">Проверить маршрут</button><button class="btn btn-outline" id="saveProgram">Сохранить</button><button class="btn btn-outline" id="clearProgram">Очистить</button></div>
+        </section>
+        <section class="panel" aria-labelledby="libraryTitle">
+            <div class="panel-heading"><h2 id="libraryTitle">Сохранённые программы</h2><button class="text-button" id="refreshPrograms">Обновить</button></div>
+            <div id="savedPrograms" class="saved-programs"></div>
+        </section>
+        <section class="panel" aria-labelledby="runTitle">
+            <div class="panel-heading"><h2 id="runTitle">Запуск на WDR</h2><span class="badge">Пошаговый режим</span></div>
+            <p class="form-hint">Контроллер подтверждает приём команды. Перед следующим шагом дождитесь завершения движения или работы подъёмника.</p>
+            <label class="field">Адрес ESP8266<input class="input" id="robotAddress" value="192.168.4.1" spellcheck="false"></label>
+            <button class="btn btn-outline" id="startProgram">Подготовить запуск</button>
+            <p id="runStatus" class="run-status">Запуск не подготовлен. Проверка маршрута не отправляет команды роботу.</p>
+            <label class="form-checkbox"><input type="checkbox" id="confirmStep">Робот в указанной позиции; предыдущая команда завершена</label>
+            <div class="toolbar wrap run-controls"><button class="btn btn-primary" id="nextStep" disabled>Отправить команду</button><button class="btn btn-danger" id="stopRobot">Стоп</button></div>
+        </section>
+    </div>
+</main>
+<script src="{{ url_for('static', filename='js/programmer.js') }}"></script>
+</body>
+</html>

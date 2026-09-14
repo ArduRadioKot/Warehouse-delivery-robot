@@ -29,8 +29,7 @@
         if (!btn) return;
         const robotId = btn.getAttribute('data-robot-id');
         if (robotId) {
-            alert('Открытие робота #' + robotId);
-            // window.location.href = '/robot/' + robotId;
+            window.location.href = '/robot-programmer';
         }
     });
 })();
