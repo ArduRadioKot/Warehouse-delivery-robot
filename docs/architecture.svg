@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 280" role="img" aria-labelledby="title desc">
+<title id="title">Архитектура WDR</title><desc id="desc">Браузер связан с Flask. Сервер обрабатывает карту в OpenCV, передаёт команды роботу через ESP8266 и управляет дроном через Pioneer SDK.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 9 5 1 9" fill="none" stroke="#718b87" stroke-width="1.5"/></marker></defs>
+<rect width="1000" height="280" rx="18" fill="#f4f7f6"/>
+<g fill="white" stroke="#dce5e2"><rect x="30" y="110" width="150" height="60" rx="12"/><rect x="245" y="110" width="150" height="60" rx="12"/><rect x="485" y="25" width="475" height="60" rx="12"/><rect x="485" y="110" width="475" height="60" rx="12"/><rect x="485" y="195" width="475" height="60" rx="12"/></g>
+<g fill="none" stroke="#718b87" stroke-width="2" marker-end="url(#arrow)"><path d="M180 140H235"/><path d="M395 140H440V55H475"/><path d="M395 140H475"/><path d="M395 140H440V225H475"/></g>
+<g font-family="sans-serif" font-size="18" fill="#29483f"><text x="105" y="146" text-anchor="middle">Браузер</text><text x="320" y="146" text-anchor="middle">Flask</text><text x="510" y="51">OpenCV и граф склада</text><text x="510" y="136">Программы робота и ESP8266</text><text x="510" y="221">Pioneer SDK и дрон</text></g>
+<g font-family="sans-serif" font-size="13" fill="#6d8079"><text x="510" y="71">Распознавание плана и расчёт маршрутов</text><text x="510" y="156">HTTP, UART, перемещение и подъёмник</text><text x="510" y="241">Миссия инвентаризации, камера и QR-коды</text></g></svg>
