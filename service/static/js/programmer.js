@@ -34,7 +34,7 @@
     function invalidate() { plan = null; renderGraph(); renderPlan(); }
     function commandText(command) {
         if (command.type === 'turn') return `Поворот ${command.angle}°`;
-        if (command.type === 'drive') return `Проехать ${command.distance} м → ${command.target_node}`;
+        if (command.type === 'drive') return `Проехать ${command.distance} м до узла ${command.target_node}`;
         return command.action === 'up' ? 'Поднять груз' : 'Опустить груз';
     }
     function makeButton(text, handler, label) {
@@ -43,19 +43,45 @@
         if (label) button.setAttribute('aria-label', label);
         button.addEventListener('click', handler); return button;
     }
+    function icon(name) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.classList.add('ui-icon'); svg.setAttribute('aria-hidden', 'true');
+        const use = document.createElementNS(svg.namespaceURI, 'use');
+        use.setAttribute('href', '/static/images/icons.svg#' + name); svg.append(use);
+        return svg;
+    }
+    function iconButton(name, handler, label) {
+        const button = makeButton('', handler, label);
+        button.classList.add('action-control'); button.title = label; button.append(icon(name));
+        return button;
+    }
     function renderActions() {
         $('actionCount').textContent = `${actions.length} действий`;
         $('actionList').replaceChildren();
         actions.forEach((action, index) => {
             const row = document.createElement('li'); row.className = 'action-row';
-            const label = document.createElement('span');
-            label.textContent = action.type === 'move' ? `Переместиться → ${action.target_node}` :
-                action.lift_action === 'up' ? 'Поднять груз' : 'Опустить груз';
-            row.append(label);
+            const order = document.createElement('span'); order.className = 'action-order';
+            order.textContent = String(index + 1).padStart(2, '0');
+            const label = document.createElement('div'); label.className = 'action-description';
+            const title = document.createElement('strong');
+            title.textContent = action.type === 'move' ? 'Перемещение' : action.lift_action === 'up' ? 'Поднять груз' : 'Опустить груз';
+            const detail = document.createElement('span');
+            if (action.type === 'move') {
+                detail.textContent = 'Узел ' + action.target_node;
+            } else detail.textContent = 'Управление подъёмником';
+            label.append(title, detail); row.append(order, label);
             const controls = document.createElement('span'); controls.className = 'row-controls';
-            const up = makeButton('↑', () => { [actions[index - 1], actions[index]] = [actions[index], actions[index - 1]]; renderActions(); invalidate(); }, 'Переместить действие выше');
-            up.disabled = index === 0;
-            controls.append(up, makeButton('×', () => { actions.splice(index, 1); renderActions(); invalidate(); }, 'Удалить действие'));
+            const reorder = offset => {
+                const next = index + offset;
+                if (next < 0 || next >= actions.length) return;
+                [actions[next], actions[index]] = [actions[index], actions[next]];
+                renderActions(); invalidate(); renderRun();
+            };
+            const up = iconButton('arrow-up', () => reorder(-1), 'Переместить действие выше');
+            const down = iconButton('arrow-down', () => reorder(1), 'Переместить действие ниже');
+            up.dataset.reorder = 'up'; down.dataset.reorder = 'down';
+            up.disabled = index === 0; down.disabled = index === actions.length - 1;
+            controls.append(up, down, iconButton('trash', () => { actions.splice(index, 1); renderActions(); invalidate(); renderRun(); }, 'Удалить действие'));
             row.append(controls); $('actionList').append(row);
         });
         if (!actions.length) {
@@ -134,9 +160,11 @@
         document.querySelectorAll('#selectStart, #selectTarget, #programName, #startHeading, #addMove, #addLiftUp, #addLiftDown, #previewProgram, #clearProgram, #saveProgram, #actionList button, #savedPrograms button').forEach(button => {
             button.disabled = Boolean(active);
         });
-        // Keep the first reorder arrow disabled when editing is available again.
-        const firstArrow = $('actionList').querySelector('button');
-        if (firstArrow) firstArrow.disabled = true;
+        const rows = $('actionList').querySelectorAll('.action-row');
+        rows.forEach((row, index) => {
+            row.querySelector('[data-reorder="up"]').disabled = Boolean(active) || index === 0;
+            row.querySelector('[data-reorder="down"]').disabled = Boolean(active) || index === rows.length - 1;
+        });
         $('programGraph').style.pointerEvents = active ? 'none' : '';
         $('programGraph').querySelectorAll('[role="button"]').forEach(node => node.setAttribute('tabindex', active ? '-1' : '0'));
         $('startProgram').disabled = busy || Boolean(active);
@@ -146,7 +174,7 @@
         const next = run.plan.commands[run.next_index];
         const labels = {ready:'Готов к первой команде', waiting:'Ожидается подтверждение оператора', completed:'Завершение подтверждено оператором', stopped:'STOP передан', error:'Ошибка связи: положение неизвестно', stop_failed:'Не удалось передать STOP'};
         $('runStatus').textContent = `${labels[run.status]} · Передано ${run.next_index}/${run.plan.commands.length}. ${active && next ? 'Следующая: ' + commandText(next) : ''} ${run.error || ''}`;
-        $('nextStep').textContent = next ? 'Отправить следующую команду' : 'Подтвердить завершение';
+        $('nextStep').querySelector('span').textContent = next ? 'Отправить следующую команду' : 'Подтвердить завершение';
     }
     bind('selectStart', () => { mode = 'start'; $('mapHint').textContent = 'Нажмите на узел, в котором сейчас находится робот.'; });
     bind('selectTarget', () => { mode = 'target'; $('mapHint').textContent = 'Нажмите на целевой узел, затем добавьте перемещение.'; });

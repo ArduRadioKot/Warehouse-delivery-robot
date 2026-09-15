@@ -1,3 +1,4 @@
+{% from 'icons.html' import icon %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -188,7 +189,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3 class="modal-title" id="nodeQrModalTitle">Узел</h3>
-                <button type="button" class="modal-close" id="nodeQrModalClose" aria-label="Закрыть">&times;</button>
+                <button type="button" class="modal-close" id="nodeQrModalClose" aria-label="Закрыть">{{ icon('close') }}</button>
             </div>
             <div class="modal-body">
                 <p class="modal-qr-content" id="nodeQrModalContent">—</p>
@@ -200,7 +201,7 @@
         <div class="modal modal-video">
             <div class="modal-header">
                 <h3 class="modal-title">Видеопоток с камеры дрона</h3>
-                <button type="button" class="modal-close" id="videoStreamModalClose" aria-label="Закрыть">&times;</button>
+                <button type="button" class="modal-close" id="videoStreamModalClose" aria-label="Закрыть">{{ icon('close') }}</button>
             </div>
             <div class="modal-body modal-video-body">
                 <label class="form-checkbox" style="margin-bottom: 8px; display: inline-flex; align-items: center; gap: 6px;">
